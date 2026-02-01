@@ -1,12 +1,28 @@
 FROM python:3.13.11-slim
+
+# Install dependencies required for psycopg2-binary (libpq-dev)
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy uv binary from the official image
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
 
+# Set the working directory inside the container
 WORKDIR /code
+
+# Set up the virtual environment path
 ENV PATH="/code/.venv/bin:$PATH"
 
+# Copy project files (dependencies, version, etc.)
 COPY pyproject.toml .python-version uv.lock ./
+
+# Install dependencies using uv
 RUN uv sync --locked
 
+# Copy your Python script
 COPY ingest_data.py .
 
+# Set the entrypoint to run the ingestion script
 ENTRYPOINT ["python", "ingest_data.py"]
